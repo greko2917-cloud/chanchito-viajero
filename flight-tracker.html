@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✈️ Chanchito Viajero</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky-top: #87CEEB;
+    --sky-mid: #b8e4f7;
+    --sky-bot: #dff3fc;
+    --pink: #ffb3c6;
+    --pink-dark: #ff6b9d;
+    --yellow: #ffe066;
+    --white: #ffffff;
+    --soft-shadow: 0 8px 32px rgba(100,160,220,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(180deg, #5ba8d4 0%, #87ceeb 30%, #b8e4f7 60%, #dff3fc 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    padding: 36px 20px 10px;
+    z-index: 10;
+    position: relative;
+  }
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 6vw, 3.6rem);
+    color: #fff;
+    text-shadow: 0 3px 12px rgba(80,130,200,0.35), 0 1px 0 rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+  }
+  header p.subtitle {
+    font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+    color: rgba(255,255,255,0.92);
+    margin-top: 6px;
+    font-weight: 700;
+  }
+
+  /* ── COUNTDOWN BADGE ── */
+  .countdown-badge {
+    margin: 18px auto 0;
+    background: linear-gradient(135deg, #ff6b9d, #ff9ec6);
+    color: #fff;
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.3rem, 4vw, 2rem);
+    box-shadow: 0 6px 24px rgba(255,107,157,0.4), 0 0 0 4px rgba(255,255,255,0.35);
+    display: inline-block;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); box-shadow: 0 6px 24px rgba(255,107,157,0.4), 0 0 0 4px rgba(255,255,255,0.35); }
+    50% { transform: scale(1.04); box-shadow: 0 10px 36px rgba(255,107,157,0.55), 0 0 0 6px rgba(255,255,255,0.5); }
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    width: min(90vw, 700px);
+    margin: 20px auto 0;
+    background: rgba(255,255,255,0.35);
+    border-radius: 50px;
+    height: 14px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 6px rgba(100,160,220,0.25);
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #ff6b9d, #ffb347);
+    transition: width 1.5s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 10px rgba(255,180,80,0.5);
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    width: min(90vw, 700px);
+    margin: 6px auto 0;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.9);
+    font-weight: 700;
+  }
+
+  /* ── MAP CONTAINER ── */
+  .map-container {
+    position: relative;
+    width: min(96vw, 860px);
+    margin: 28px auto 0;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 16px 56px rgba(50,100,180,0.22), 0 0 0 3px rgba(255,255,255,0.45);
+    background: #cce9fa;
+  }
+
+  .map-svg-wrap {
+    width: 100%;
+    position: relative;
+  }
+  .map-svg-wrap svg { display: block; width: 100%; }
+
+  /* Flight path on map */
+  .flight-path {
+    fill: none;
+    stroke: rgba(255,107,157,0.65);
+    stroke-width: 2.8;
+    stroke-dasharray: 9 7;
+    stroke-linecap: round;
+    animation: dashMove 1.8s linear infinite;
+  }
+  @keyframes dashMove {
+    to { stroke-dashoffset: -32; }
+  }
+
+  /* Plane + pig emoji */
+  .plane-wrapper {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    transition: left 1.5s cubic-bezier(.4,0,.2,1), top 1.5s cubic-bezier(.4,0,.2,1);
+    animation: float 3.2s ease-in-out infinite;
+    z-index: 20;
+  }
+  @keyframes float {
+    0%,100% { transform: translate(-50%, -50%) translateY(0px) rotate(-1deg); }
+    30% { transform: translate(-50%, -50%) translateY(-8px) rotate(1.5deg); }
+    65% { transform: translate(-50%, -50%) translateY(-4px) rotate(-0.8deg); }
+  }
+
+  .plane-emoji {
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    filter: drop-shadow(0 4px 12px rgba(80,130,200,0.4));
+    line-height: 1;
+  }
+  .pig-emoji {
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    line-height: 1;
+    margin-top: -4px;
+    animation: pigBob 2.1s ease-in-out infinite;
+  }
+  @keyframes pigBob {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .pig-label {
+    background: linear-gradient(135deg, #ff6b9d, #ff9ec6);
+    color: #fff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.72rem;
+    border-radius: 20px;
+    padding: 2px 10px;
+    margin-top: 3px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(255,107,157,0.4);
+  }
+
+  /* City pins */
+  .city-pin {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 15;
+  }
+  .city-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .city-dot.origin { background: #ff6b9d; }
+  .city-dot.dest   { background: #5cb85c; }
+  .city-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.78rem;
+    color: #fff;
+    background: rgba(50,90,140,0.75);
+    border-radius: 8px;
+    padding: 2px 8px;
+    margin-top: 3px;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── CLOUDS ── */
+  .cloud {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.82;
+    z-index: 1;
+  }
+  .cloud svg ellipse { }
+
+  @keyframes cloudDrift1 {
+    0%   { transform: translateX(-180px); }
+    100% { transform: translateX(calc(100vw + 180px)); }
+  }
+  @keyframes cloudDrift2 {
+    0%   { transform: translateX(calc(100vw + 180px)); }
+    100% { transform: translateX(-180px); }
+  }
+
+  /* ── INFO CARDS ── */
+  .cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    width: min(96vw, 860px);
+    margin: 24px auto 40px;
+  }
+  .card {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 18px 26px;
+    min-width: 160px;
+    flex: 1 1 160px;
+    max-width: 220px;
+    text-align: center;
+    box-shadow: var(--soft-shadow);
+    border: 2px solid rgba(255,255,255,0.6);
+    transition: transform .2s;
+  }
+  .card:hover { transform: translateY(-4px); }
+  .card .card-icon { font-size: 2rem; margin-bottom: 6px; }
+  .card .card-title {
+    font-size: 0.78rem;
+    color: #6fa8c8;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .card .card-value {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.55rem;
+    color: #3a7cbf;
+  }
+  .card .card-sub {
+    font-size: 0.74rem;
+    color: #8ab8d8;
+    margin-top: 2px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.82rem;
+    padding: 0 20px 30px;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<!-- CLOUDS -->
+<div class="cloud" style="top:7%; animation: cloudDrift1 38s linear infinite;">
+  <svg width="180" height="60" viewBox="0 0 180 60"><ellipse cx="90" cy="40" rx="80" ry="22" fill="white"/><ellipse cx="60" cy="32" rx="44" ry="26" fill="white"/><ellipse cx="118" cy="30" rx="36" ry="22" fill="white"/></svg>
+</div>
+<div class="cloud" style="top:14%; animation: cloudDrift2 52s linear infinite; opacity:.65;">
+  <svg width="140" height="48" viewBox="0 0 140 48"><ellipse cx="70" cy="32" rx="60" ry="18" fill="white"/><ellipse cx="46" cy="26" rx="34" ry="20" fill="white"/><ellipse cx="96" cy="24" rx="28" ry="18" fill="white"/></svg>
+</div>
+<div class="cloud" style="top:3%; animation: cloudDrift1 61s 12s linear infinite; opacity:.55;">
+  <svg width="220" height="72" viewBox="0 0 220 72"><ellipse cx="110" cy="48" rx="100" ry="26" fill="white"/><ellipse cx="76" cy="38" rx="52" ry="30" fill="white"/><ellipse cx="148" cy="36" rx="44" ry="26" fill="white"/></svg>
+</div>
+<div class="cloud" style="top:22%; animation: cloudDrift2 44s 8s linear infinite; opacity:.7;">
+  <svg width="160" height="56" viewBox="0 0 160 56"><ellipse cx="80" cy="38" rx="70" ry="20" fill="white"/><ellipse cx="52" cy="30" rx="40" ry="24" fill="white"/><ellipse cx="112" cy="28" rx="34" ry="20" fill="white"/></svg>
+</div>
+
+<!-- HEADER -->
+<header>
+  <h1>🐷✈️ Chanchito Viajero</h1>
+  <p class="subtitle">Turquía → Argentina · Un viaje lleno de amor</p>
+  <div class="countdown-badge" id="countdownBadge">⏳ Calculando...</div>
+</header>
+
+<!-- PROGRESS BAR -->
+<div class="progress-wrap">
+  <div class="progress-fill" id="progressFill" style="width:0%"></div>
+</div>
+<div class="progress-labels">
+  <span>🇹🇷 9 mayo</span>
+  <span id="progressPct">0%</span>
+  <span>27 mayo 🇦🇷</span>
+</div>
+
+<!-- MAP -->
+<div class="map-container">
+  <div class="map-svg-wrap" id="mapWrap">
+
+    <!-- Simplified world map SVG focused on Turkey → Argentina route -->
+    <svg id="mainMap" viewBox="0 0 900 440" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5ba8d4"/>
+          <stop offset="100%" stop-color="#8ecce8"/>
+        </linearGradient>
+        <linearGradient id="landGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#b5d89a"/>
+          <stop offset="100%" stop-color="#91c67a"/>
+        </linearGradient>
+        <filter id="landShadow">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+        </filter>
+      </defs>
+
+      <!-- Ocean background -->
+      <rect width="900" height="440" fill="url(#seaGrad)" rx="26"/>
+
+      <!-- === LAND MASSES (simplified but recognizable) === -->
+      <!-- Europe -->
+      <path fill="url(#landGrad)" filter="url(#landShadow)" d="
+        M310,30 L380,28 L420,35 L440,50 L430,70 L400,80 L390,95 L370,100
+        L350,90 L330,95 L310,88 L295,75 L300,55 Z"/>
+      <!-- Iberian Peninsula -->
+      <path fill="url(#landGrad)" d="M265,75 L300,72 L305,95 L285,110 L260,100 L258,85 Z"/>
+      <!-- France/Italy bump -->
+      <path fill="url(#landGrad)" d="M300,72 L330,68 L340,85 L325,95 L305,95 Z"/>
+      <!-- UK rough -->
+      <path fill="url(#landGrad)" d="M272,38 L285,35 L290,50 L278,55 L268,48 Z"/>
+      <!-- Scandinavia -->
+      <path fill="url(#landGrad)" d="M320,18 L355,15 L365,30 L345,40 L325,38 L315,28 Z"/>
+
+      <!-- Africa -->
+      <path fill="url(#landGrad)" filter="url(#landShadow)" d="
+        M275,130 L350,120 L420,125 L460,140 L480,170 L475,210 L460,250
+        L440,285 L415,310 L390,325 L365,330 L340,320 L318,295 L305,265
+        L295,235 L288,200 L282,170 L272,155 Z"/>
+
+      <!-- Turkey / Middle East -->
+      <path fill="url(#landGrad)" filter="url(#landShadow)" d="
+        M450,88 L520,82 L560,88 L580,100 L570,118 L545,125 L510,120
+        L480,115 L460,108 Z"/>
+      <!-- Middle East -->
+      <path fill="url(#landGrad)" d="M530,115 L580,108 L600,130 L590,155 L565,160 L540,145 L528,128 Z"/>
+
+      <!-- India -->
+      <path fill="url(#landGrad)" d="M600,125 L650,120 L670,145 L665,180 L640,210 L620,195 L605,165 L598,140 Z"/>
+
+      <!-- Southeast Asia / Indonesia simplified -->
+      <path fill="url(#landGrad)" d="M680,130 L730,125 L750,145 L735,158 L700,155 L678,145 Z"/>
+      <path fill="url(#landGrad)" d="M700,165 L740,158 L755,175 L730,185 L702,178 Z"/>
+
+      <!-- Australia -->
+      <path fill="url(#landGrad)" filter="url(#landShadow)" d="
+        M700,245 L770,235 L810,248 L830,270 L825,300 L800,318 L760,322
+        L725,310 L705,288 L698,265 Z"/>
+
+      <!-- South America -->
+      <path fill="url(#landGrad)" filter="url(#landShadow)" d="
+        M155,155 L215,148 L248,162 L260,185 L255,215 L240,245 L225,275
+        L215,305 L205,335 L190,360 L172,375 L155,365 L142,340 L135,310
+        L132,280 L136,250 L140,220 L145,190 Z"/>
+      <!-- Caribbean bump -->
+      <path fill="url(#landGrad)" d="M155,148 L185,140 L200,155 L178,165 L155,158 Z"/>
+
+      <!-- North America -->
+      <path fill="url(#landGrad)" filter="url(#landShadow)" d="
+        M28,30 L110,22 L165,35 L185,55 L180,80 L165,100 L150,120 L140,145
+        L125,148 L100,138 L75,130 L50,115 L30,95 L18,65 Z"/>
+      <!-- Mexico -->
+      <path fill="url(#landGrad)" d="M80,138 L125,140 L140,158 L130,175 L105,178 L82,165 Z"/>
+
+      <!-- Greenland -->
+      <path fill="#d0ece0" d="M175,10 L230,8 L245,20 L235,38 L205,42 L178,32 Z"/>
+
+      <!-- === FLIGHT PATH (SVG path, updated by JS) === -->
+      <path id="flightPath" class="flight-path" d="M510,100 Q400,60 300,160 Q220,230 185,280"/>
+
+      <!-- Plane/pig will be absolutely positioned over the map wrap -->
+    </svg>
+
+    <!-- City pins positioned via CSS/JS -->
+    <div class="city-pin" id="pinOrigin" style="left:56.5%; top:23%;">
+      <div class="city-dot origin"></div>
+      <div class="city-name">🇹🇷 Estambul</div>
+    </div>
+    <div class="city-pin" id="pinDest" style="left:20.5%; top:64%;">
+      <div class="city-dot dest"></div>
+      <div class="city-name">🇦🇷 Buenos Aires</div>
+    </div>
+
+    <!-- Plane wrapper -->
+    <div class="plane-wrapper" id="planeWrapper">
+      <div class="plane-emoji">✈️</div>
+      <div class="pig-emoji">🐷</div>
+      <div class="pig-label">¡Voy llegando!</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- INFO CARDS -->
+<div class="cards">
+  <div class="card">
+    <div class="card-icon">📅</div>
+    <div class="card-title">Días viajados</div>
+    <div class="card-value" id="cardDaysTraveled">—</div>
+    <div class="card-sub">de 18 días totales</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🌍</div>
+    <div class="card-title">Distancia volada</div>
+    <div class="card-value" id="cardDistance">—</div>
+    <div class="card-sub">km aprox.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">⏱️</div>
+    <div class="card-title">Tiempo en aire</div>
+    <div class="card-value" id="cardHours">—</div>
+    <div class="card-sub">horas estimadas</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🗓️</div>
+    <div class="card-title">Llegada</div>
+    <div class="card-value">27 mayo</div>
+    <div class="card-sub">¡Pronto!</div>
+  </div>
+</div>
+
+<footer>
+  Hecho con 💕 para el chanchito más tierno del mundo ✈️🐷
+</footer>
+
+<script>
+  // ── DATES ──
+  const START  = new Date('2025-05-09T00:00:00');
+  const END    = new Date('2025-05-27T23:59:59');
+  const TODAY  = new Date('2025-05-20T12:00:00'); // Fixed to May 20 as requested
+  const TOTAL_DAYS = (END - START) / (1000 * 60 * 60 * 24);
+
+  // Days elapsed since start (clamped)
+  const elapsed = Math.max(0, Math.min((TODAY - START) / (1000 * 60 * 60 * 24), TOTAL_DAYS));
+  const progress = elapsed / TOTAL_DAYS; // 0..1
+
+  // Days remaining until END
+  const remaining = Math.max(0, Math.ceil((END - TODAY) / (1000 * 60 * 60 * 24)));
+
+  // ── COUNTDOWN BADGE ──
+  const badge = document.getElementById('countdownBadge');
+  if (remaining <= 0) {
+    badge.textContent = '🎉 ¡El chanchito llegó!';
+    badge.style.background = 'linear-gradient(135deg,#5cb85c,#8edc8e)';
+  } else {
+    badge.textContent = `💕 Faltan ${remaining} día${remaining!==1?'s':''} para verte`;
+  }
+
+  // ── PROGRESS BAR ──
+  const pct = Math.round(progress * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+
+  // ── CARDS ──
+  document.getElementById('cardDaysTraveled').textContent = Math.floor(elapsed);
+  const totalKm = 12500;
+  document.getElementById('cardDistance').textContent = Math.round(progress * totalKm).toLocaleString('es');
+  document.getElementById('cardHours').textContent = Math.round(progress * 180); // ~180h total
+
+  // ── PLANE POSITION along the flight arc ──
+  // Path: Estambul (56.5%, 23%) → Buenos Aires (20.5%, 64%)
+  // We use a quadratic bezier control point for the arc
+  const ox = 56.5, oy = 23;   // origin %
+  const dx = 20.5, dy = 64;   // destination %
+  const cx = 38,   cy = 10;   // control point (arcs over the Atlantic)
+
+  function bezier(t, p0, p1, p2) {
+    return (1-t)*(1-t)*p0 + 2*(1-t)*t*p1 + t*t*p2;
+  }
+
+  const planeX = bezier(progress, ox, cx, dx);
+  const planeY = bezier(progress, oy, cy, dy);
+
+  const planeEl = document.getElementById('planeWrapper');
+  planeEl.style.left = planeX + '%';
+  planeEl.style.top  = planeY + '%';
+
+  // Rotate plane along tangent
+  const eps = 0.01;
+  const t2 = Math.min(progress + eps, 1);
+  const nx = bezier(t2, ox, cx, dx);
+  const ny = bezier(t2, oy, cy, dy);
+  const angle = Math.atan2(ny - planeY, nx - planeX) * (180/Math.PI);
+  // Apply rotation to just the plane emoji (not the pig label)
+  planeEl.querySelector('.plane-emoji').style.transform = `rotate(${angle}deg)`;
+
+  // ── UPDATE FLIGHT PATH SVG to match the bezier ──
+  // Convert % to SVG coords (viewBox 900x440)
+  function toSvg(px, py) {
+    return { x: px / 100 * 900, y: py / 100 * 440 };
+  }
+  const so = toSvg(ox, oy);
+  const sc = toSvg(cx, cy);
+  const sd = toSvg(dx, dy);
+  document.getElementById('flightPath').setAttribute('d',
+    `M${so.x},${so.y} Q${sc.x},${sc.y} ${sd.x},${sd.y}`
+  );
+
+  // ── SUBTLE STAR / SPARKLE PARTICLES ──
+  function spawnSparkle() {
+    const s = document.createElement('div');
+    s.textContent = ['⭐','✨','💫','🌟'][Math.floor(Math.random()*4)];
+    s.style.cssText = `
+      position:fixed; font-size:${14+Math.random()*14}px;
+      left:${Math.random()*100}vw; top:${Math.random()*60}vh;
+      opacity:0; pointer-events:none; z-index:0;
+      animation: sparkleAnim ${2+Math.random()*3}s ease-in-out forwards;
+    `;
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(), 5500);
+  }
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    @keyframes sparkleAnim {
+      0%   { opacity:0; transform: scale(0.5) translateY(0); }
+      30%  { opacity:0.7; }
+      80%  { opacity:0.5; transform: scale(1.1) translateY(-18px); }
+      100% { opacity:0; transform: scale(0.8) translateY(-32px); }
+    }
+  `;
+  document.head.appendChild(styleEl);
+  setInterval(spawnSparkle, 1800);
+</script>
+</body>
+</html>
